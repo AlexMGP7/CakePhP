@@ -1,53 +1,177 @@
-# CakePHP Application Skeleton
+```markdown
+# Proyecto CakePHP con Docker
 
-![Build Status](https://github.com/cakephp/app/actions/workflows/ci.yml/badge.svg?branch=master)
-[![Total Downloads](https://img.shields.io/packagist/dt/cakephp/app.svg?style=flat-square)](https://packagist.org/packages/cakephp/app)
-[![PHPStan](https://img.shields.io/badge/PHPStan-level%207-brightgreen.svg?style=flat-square)](https://github.com/phpstan/phpstan)
+Este proyecto es una aplicación CakePHP que se ejecuta en contenedores Docker, lo que facilita la configuración y el despliegue. A continuación, se detallan los pasos para descargar el proyecto, iniciar los servicios, y cómo interactuar con el contenedor.
 
-A skeleton for creating applications with [CakePHP](https://cakephp.org) 4.x.
+## Requisitos previos
 
-The framework source code can be found here: [cakephp/cakephp](https://github.com/cakephp/cakephp).
+Antes de comenzar, asegúrate de tener instalados los siguientes programas en tu máquina:
 
-## Installation
+- [Git](https://git-scm.com/)
+- [Docker](https://www.docker.com/)
+- [Docker Compose](https://docs.docker.com/compose/)
 
-1. Download [Composer](https://getcomposer.org/doc/00-intro.md) or update `composer self-update`.
-2. Run `php composer.phar create-project --prefer-dist cakephp/app [app_name]`.
+## 1. Clonar el repositorio
 
-If Composer is installed globally, run
-
-```bash
-composer create-project --prefer-dist cakephp/app
-```
-
-In case you want to use a custom app dir name (e.g. `/myapp/`):
+Para descargar el proyecto, clona este repositorio desde GitHub:
 
 ```bash
-composer create-project --prefer-dist cakephp/app myapp
+git clone https://github.com/AlexMGP7/CakePhP.git
 ```
-
-You can now either use your machine's webserver to view the default home page, or start
-up the built-in webserver with:
 
 ```bash
-bin/cake server -p 8765
+cd CakePhP
 ```
 
-Then visit `http://localhost:8765` to see the welcome page.
+## 2. Iniciar el proyecto con Docker
 
-## Update
+### Construir y levantar los contenedores
 
-Since this skeleton is a starting point for your application and various files
-would have been modified as per your needs, there isn't a way to provide
-automated upgrades, so you have to do any updates manually.
+Para iniciar los contenedores y levantar la aplicación, utiliza el siguiente comando:
 
-## Configuration
+```bash
+docker-compose up --build
+```
 
-Read and edit the environment specific `config/app_local.php` and set up the
-`'Datasources'` and any other configuration relevant for your application.
-Other environment agnostic settings can be changed in `config/app.php`.
+Este comando construirá las imágenes Docker (si es necesario) y levantará los contenedores para la aplicación y la base de datos MySQL.
 
-## Layout
+### Detener los contenedores
 
-The app skeleton uses [Milligram](https://milligram.io/) (v1.3) minimalist CSS
-framework by default. You can, however, replace it with any other library or
-custom styles.
+Si necesitas detener los contenedores en ejecución, puedes hacerlo con el siguiente comando:
+
+```bash
+docker-compose down
+```
+
+Esto detendrá y eliminará los contenedores, pero **no eliminará los volúmenes de la base de datos**.
+
+### Reiniciar los contenedores
+
+Si ya has construido los contenedores anteriormente y solo necesitas reiniciarlos, usa:
+
+```bash
+docker-compose up
+```
+
+## 3. Acceder al contenedor de la aplicación
+
+Si necesitas acceder al contenedor donde corre la aplicación CakePHP para ejecutar comandos de Composer o CakePHP, usa el siguiente comando:
+
+```bash
+docker exec -it cakephp-app bash
+```
+
+Este comando te llevará a la terminal dentro del contenedor.
+
+### Para salir del contenedor:
+
+Para salir del contenedor y regresar a tu terminal local, simplemente escribe:
+
+```bash
+exit
+```
+
+## 4. Acceder a la base de datos MySQL
+
+Puedes acceder a la base de datos MySQL desde el contenedor de la aplicación:
+
+1. Accede al contenedor de la aplicación:
+
+    ```bash
+    docker exec -it cakephp-app bash
+    ```
+
+2. Luego, conecta a la base de datos MySQL desde el contenedor:
+
+    ```bash
+    mysql -h db -u user -p
+    ```
+
+El host es `db` (el nombre del servicio definido en `docker-compose.yml`), el usuario es `user`, y la contraseña es `password`.
+
+## 5. Acceder a phpMyAdmin (Opcional)
+
+Si has configurado **phpMyAdmin** en Docker, puedes acceder a la interfaz web de administración de MySQL en:
+
+[http://localhost:8081](http://localhost:8081)
+
+Las credenciales de acceso son las mismas que las configuradas en el archivo `docker-compose.yml`:
+
+- **Usuario**: `user`
+- **Contraseña**: `password`
+
+## 6. Configuración de la base de datos en CakePHP
+
+La configuración de la base de datos para CakePHP está en el archivo `config/app_local.php`. El host de la base de datos debe ser `db`, y las credenciales deben coincidir con las configuradas en `docker-compose.yml`.
+
+Aquí un ejemplo de cómo debería verse la configuración:
+
+```php
+'Datasources' => [
+    'default' => [
+        'className' => Connection::class,
+        'driver' => Mysql::class,
+        'persistent' => false,
+        'host' => 'db',
+        'username' => 'user',
+        'password' => 'password',
+        'database' => 'cakephp_db',
+        'encoding' => 'utf8mb4',
+        'timezone' => 'UTC',
+        'cacheMetadata' => true,
+        'quoteIdentifiers' => false,
+        'log' => false,
+        'url' => env('DATABASE_URL', null),
+    ],
+],
+```
+
+## 7. Ejecutar migraciones de la base de datos
+
+Si necesitas ejecutar las migraciones de la base de datos, asegúrate de que los contenedores estén corriendo y ejecuta el siguiente comando dentro del contenedor de la aplicación:
+
+```bash
+bin/cake migrations migrate
+```
+
+Esto aplicará cualquier migración pendiente en la base de datos.
+
+## 8. Composer
+
+El manejo de dependencias se realiza con **Composer**. Si necesitas instalar o actualizar dependencias dentro del contenedor de la aplicación, puedes usar el siguiente comando:
+
+```bash
+docker exec -it cakephp-app composer install
+```
+
+Este comando instalará las dependencias del proyecto según el archivo `composer.json`.
+
+## 9. Estructura del proyecto
+
+La estructura del proyecto es la siguiente:
+
+```
+/proyecto-cakephp
+├── bin/                     # Ejecutables y utilidades
+├── config/                  # Archivos de configuración del proyecto
+├── logs/                    # Archivos de logs generados
+├── src/                     # Código fuente de la aplicación CakePHP
+├── templates/               # Plantillas de vistas de CakePHP
+├── tests/                   # Pruebas unitarias y funcionales
+├── vendor/                  # Dependencias instaladas por Composer
+├── docker-compose.yml        # Configuración de Docker Compose
+├── Dockerfile               # Dockerfile para la construcción del contenedor
+└── README.md                # Instrucciones del proyecto
+```
+
+## 10. Información adicional
+
+### Puerto de la aplicación
+
+La aplicación CakePHP estará disponible en el navegador en [http://localhost:8080](http://localhost:8080) una vez que los contenedores estén en ejecución.
+
+---
+
+Si tienes alguna duda o problema al seguir estos pasos, revisa que Docker esté correctamente instalado y que los contenedores estén corriendo con `docker ps`.
+
+¡Gracias por usar este proyecto!
