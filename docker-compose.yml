@@ -1,0 +1,42 @@
+version: '3'
+
+services:
+  app:
+    build: .
+    container_name: cakephp-app
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      - db
+    networks:
+      - cake-network
+
+  db:
+    image: mysql:5.7
+    container_name: cakephp-db
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: cakephp_db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    networks:
+      - cake-network
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    environment:
+      PMA_HOST: db
+      MYSQL_ROOT_PASSWORD: secret
+    ports:
+      - "8081:80"
+    depends_on:
+      - db
+    networks:
+      - cake-network
+
+networks:
+  cake-network:
+    driver: bridge
