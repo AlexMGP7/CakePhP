@@ -1,4 +1,4 @@
-```markdown
+
 # Proyecto CakePHP con Docker
 
 Este proyecto es una aplicación CakePHP que se ejecuta en contenedores Docker, lo que facilita la configuración y el despliegue. A continuación, se detallan los pasos para descargar el proyecto, iniciar los servicios, y cómo interactuar con el contenedor.
